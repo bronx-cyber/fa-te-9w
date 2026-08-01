@@ -1,10 +1,10 @@
 <?php
 // ============================================
-// 🚀 BRONX 91WHEELS PROXY V4 - FINAL FIX
-// Fixed Warnings • Guaranteed Bypass
+// 🚀 BRONX 91WHEELS PROXY V5 - FINAL
+// Fixed Errors • 5-8 Seconds • Bypass Limit
 // ============================================
 
-set_time_limit(30);
+set_time_limit(25);
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
@@ -23,7 +23,7 @@ if ($rc === '') {
     ?>
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>🚗 BRONX RC PROXY V4 - FIXED</title>
+<title>🚗 BRONX RC PROXY V5</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000a14;color:#d0d8f0;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
@@ -51,8 +51,8 @@ footer{color:#333;font-size:9px;margin-top:12px}
 </style></head>
 <body>
 <div class="card">
-<h1>🚗 BRONX RC PROXY V4</h1>
-<p class="subtitle">✅ FIXED • FAST • BYPASS LIMIT</p>
+<h1>🚗 BRONX RC PROXY V5</h1>
+<p class="subtitle">⚡ 5-8 SECONDS • AUTO ROTATE • BYPASS LIMIT</p>
 <div class="badges">
 <span class="badge">🌐 Fresh IP</span><span class="badge">🔄 Auto Rotate</span>
 <span class="badge">⚡ 5-8 Sec</span><span class="badge">∞ Unlimited</span>
@@ -67,7 +67,7 @@ footer{color:#333;font-size:9px;margin-top:12px}
 <input type="text" id="rcInput" placeholder="Enter RC Number..." autocomplete="off">
 <button onclick="fetchRC()">🔍 FETCH WITH FRESH PROXY</button>
 <div class="result" id="result"><div class="info" id="info"></div><pre id="data"></pre></div>
-<footer>@BRONX_ULTRA • ✅ Warning Fixed</footer>
+<footer>@BRONX_ULTRA • ✅ Speed Optimized</footer>
 </div>
 <script>
 var req=0,ok=0,startTime;
@@ -101,25 +101,26 @@ req++;document.getElementById('reqs').textContent=req;
 }
 
 // ============================================
-// 🔥 GET WORKING PROXIES (Fixed)
+// 🔥 GET WORKING PROXIES (Fixed typo)
 // ============================================
 function getWorkingProxies() {
     $proxies = [];
     
-    // Source 1: ProxyScrape HTTP
+    // Multiple sources for reliability
     $urls = [
         "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=2000&country=all&ssl=all&anonymity=all",
         "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=https&timeout=2000&country=all&ssl=all&anonymity=all",
         "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
         "https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/http.txt",
+        "https://www.proxy-list.download/api/v1/get?type=http",
     ];
     
     foreach ($urls as $url) {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 4,
-            CURLOPT_SSL_VERIFEYEER => false,
+            CURLOPT_TIMEOUT => 3,
+            CURLOPT_SSL_VERIFYPEER => false, // FIXED TYPO
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_USERAGENT => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         ]);
@@ -147,11 +148,11 @@ function getWorkingProxies() {
 }
 
 // ============================================
-// ⚡ TEST PROXY (Faster)
+// ⚡ TEST PROXY (Fast)
 // ============================================
-function testProxy($proxy, $testRC = "MH02FZ0555") {
+function testProxy($proxy) {
     $payload = json_encode([
-        "regNo" => $testRC,
+        "regNo" => "MH02FZ0555",
         "sessionid" => "test-" . uniqid()
     ]);
     
@@ -160,8 +161,8 @@ function testProxy($proxy, $testRC = "MH02FZ0555") {
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $payload,
-        CURLOPT_TIMEOUT => 3,
-        CURLOPT_CONNECTTIMEOUT => 2,
+        CURLOPT_TIMEOUT => 2,
+        CURLOPT_CONNECTTIMEOUT => 1,
         CURLOPT_PROXY => $proxy,
         CURLOPT_PROXYTYPE => CURLPROXY_HTTP,
         CURLOPT_HTTPHEADER => [
@@ -174,7 +175,7 @@ function testProxy($proxy, $testRC = "MH02FZ0555") {
         CURLOPT_NOBODY => true,
     ]);
     
-    $response = curl_exec($ch);
+    curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     
@@ -195,13 +196,12 @@ function findWorkingProxy() {
     shuffle($allProxies);
     
     // Test proxies in parallel
-    $testCount = min(20, count($allProxies));
+    $testCount = min(15, count($allProxies));
     $testProxies = array_slice($allProxies, 0, $testCount);
     
     $mh = curl_multi_init();
     $handles = [];
-    $testRC = "MH02FZ0555";
-    $payload = json_encode(["regNo" => $testRC, "sessionid" => "test-" . uniqid()]);
+    $payload = json_encode(["regNo" => "MH02FZ0555", "sessionid" => "test-" . uniqid()]);
     $url = "https://api1.91wheels.com/api/v1/third/rc-detail";
     
     foreach ($testProxies as $proxy) {
@@ -210,8 +210,8 @@ function findWorkingProxy() {
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $payload,
-            CURLOPT_TIMEOUT => 3,
-            CURLOPT_CONNECTTIMEOUT => 2,
+            CURLOPT_TIMEOUT => 2,
+            CURLOPT_CONNECTTIMEOUT => 1,
             CURLOPT_PROXY => $proxy,
             CURLOPT_PROXYTYPE => CURLPROXY_HTTP,
             CURLOPT_HTTPHEADER => [
@@ -256,47 +256,11 @@ function findWorkingProxy() {
 }
 
 // ============================================
-// 🔥 MAIN - WITH AUTO RETRY
+// 🔥 MAKE REQUEST WITH PROXY
 // ============================================
-
-$startTime = microtime(true);
-$maxRetries = 3;
-$attempt = 0;
-$result = null;
-$usedProxy = null;
-
-while ($attempt < $maxRetries) {
-    $attempt++;
-    
-    // Find working proxy
-    $proxyData = findWorkingProxy();
-    
-    if (!$proxyData) {
-        // No proxy found - try direct
-        $usedProxy = null;
-        break;
-    }
-    
-    $selectedProxy = $proxyData['proxy'];
-    $poolSize = $proxyData['pool'];
-    $totalFetched = $proxyData['total'];
-    
-    // Device rotation
-    $devices = [
-        ["Chrome 120 / Win10", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"],
-        ["Safari / iPhone", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1"],
-        ["Chrome / Android", "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36"],
-        ["Firefox / Win", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"],
-    ];
-    
-    $device = $devices[array_rand($devices)];
-    $deviceName = $device[0];
-    $userAgent = $device[1];
-    
-    // Session
+function makeRequest($rc, $proxy, $device, $userAgent) {
     $sessionId = bin2hex(random_bytes(4)) . '-' . dechex(time()) . '-' . rand(100, 999);
     
-    // Request
     $payload = json_encode([
         "regNo" => $rc,
         "sessionid" => $sessionId
@@ -307,9 +271,9 @@ while ($attempt < $maxRetries) {
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $payload,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_PROXY => $selectedProxy,
+        CURLOPT_TIMEOUT => 8,
+        CURLOPT_CONNECTTIMEOUT => 4,
+        CURLOPT_PROXY => $proxy,
         CURLOPT_PROXYTYPE => CURLPROXY_HTTP,
         CURLOPT_HTTPHEADER => [
             "Content-Type: application/json",
@@ -330,19 +294,79 @@ while ($attempt < $maxRetries) {
     $error = curl_error($ch);
     curl_close($ch);
     
+    return [
+        'response' => $response,
+        'httpCode' => $httpCode,
+        'error' => $error,
+        'sessionId' => $sessionId
+    ];
+}
+
+// ============================================
+// 🚀 MAIN EXECUTION
+// ============================================
+
+$startTime = microtime(true);
+$maxRetries = 3;
+$attempt = 0;
+$result = null;
+
+// Devices
+$devices = [
+    ["Chrome 120 / Win10", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"],
+    ["Safari / iPhone", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1"],
+    ["Chrome / Android", "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36"],
+    ["Firefox / Win", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"],
+];
+
+while ($attempt < $maxRetries) {
+    $attempt++;
+    
+    // Find working proxy
+    $proxyData = findWorkingProxy();
+    
+    if (!$proxyData) {
+        $result = [
+            "status" => "error",
+            "message" => "No working proxies found",
+            "_proxy" => [
+                "proxy_used" => "none",
+                "device" => "Unknown",
+                "pool_size" => 0,
+                "total_fetched" => 0,
+                "execution_time_ms" => round((microtime(true) - $startTime) * 1000),
+                "attempt" => $attempt,
+                "success" => false,
+                "credit" => "@BRONX_ULTRA"
+            ]
+        ];
+        break;
+    }
+    
+    $selectedProxy = $proxyData['proxy'];
+    $poolSize = $proxyData['pool'];
+    $totalFetched = $proxyData['total'];
+    
+    // Random device
+    $device = $devices[array_rand($devices)];
+    $deviceName = $device[0];
+    $userAgent = $device[1];
+    
+    // Make request
+    $requestResult = makeRequest($rc, $selectedProxy, $deviceName, $userAgent);
     $execTime = round((microtime(true) - $startTime) * 1000);
     
-    // Check if success
-    $data = json_decode($response, true);
+    // Parse response
+    $data = json_decode($requestResult['response'], true);
     
+    // Check if success
     if ($data && isset($data['status']) && $data['status'] === 'success') {
-        // Success!
         $data["_proxy"] = [
             "proxy_used" => $selectedProxy,
             "device" => $deviceName,
             "pool_size" => $poolSize,
             "total_fetched" => $totalFetched,
-            "session_id" => substr($sessionId, 0, 8) . "***",
+            "session_id" => substr($requestResult['sessionId'], 0, 8) . "***",
             "execution_time_ms" => $execTime,
             "attempt" => $attempt,
             "ip_rotated" => true,
@@ -355,7 +379,8 @@ while ($attempt < $maxRetries) {
     }
     
     // If limit error, retry with new proxy
-    if (strpos($response, 'daily limit') !== false || strpos($response, 'limit') !== false) {
+    if (strpos($requestResult['response'], 'daily limit') !== false || 
+        strpos($requestResult['response'], 'limit') !== false) {
         continue; // Try next proxy
     }
     
@@ -381,7 +406,7 @@ while ($attempt < $maxRetries) {
 if (!$result) {
     $result = [
         "status" => "error",
-        "message" => "All proxies failed or limit reached. Try again!",
+        "message" => "All proxies failed. Try again!",
         "_proxy" => [
             "proxy_used" => "none",
             "device" => "Unknown",
