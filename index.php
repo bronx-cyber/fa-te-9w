@@ -1,7 +1,7 @@
 <?php
 // ============================================
-// 🚗 BRONX 91WHEELS PROXY V5 (ULTRA FAST)
-// Parallel Testing + Caching
+// 🚗 BRONX 91WHEELS PROXY V6 (UNLIMITED)
+// Auto-Retry on Limit • Multi-Session • Multi-Device
 // ============================================
 
 set_time_limit(30);
@@ -17,13 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $rc = trim($_GET['rc'] ?? $_GET['term'] ?? '');
 
-// ============ HOME PAGE ============
+// ============ HOME PAGE (same as before, but with V6) ============
 if ($rc === '') {
     header("Content-Type: text/html");
     ?>
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>🚗 BRONX RC PROXY V5</title>
+<title>🚗 BRONX RC PROXY V6</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000a14;color:#d0d8f0;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
@@ -51,11 +51,11 @@ footer{color:#333;font-size:9px;margin-top:12px}
 </style></head>
 <body>
 <div class="card">
-<h1>🚗 BRONX RC PROXY V5</h1>
-<p class="subtitle">⚡ ULTRA FAST • PARALLEL TESTING • CACHED</p>
+<h1>🚗 BRONX RC PROXY V6</h1>
+<p class="subtitle">♾️ UNLIMITED • AUTO-RETRY • MULTI-SESSION</p>
 <div class="badges">
-<span class="badge">🌐 Live Proxies</span><span class="badge">⚡ Parallel</span>
-<span class="badge">✅ Cached</span><span class="badge">∞ Unlimited</span>
+<span class="badge">🌐 Live Proxies</span><span class="badge">🔄 Auto-Retry</span>
+<span class="badge">✅ Unlimited</span><span class="badge">♾️ No Limit</span>
 </div>
 <div class="stats">
 <div class="stat"><div class="num" id="reqs">0</div><div class="lbl">Requests</div></div>
@@ -65,9 +65,9 @@ footer{color:#333;font-size:9px;margin-top:12px}
 </div>
 <div class="api-box"><code>GET /?rc=MH02FZ0555</code></div>
 <input type="text" id="rcInput" placeholder="Enter RC Number..." autocomplete="off">
-<button onclick="fetchRC()">🔍 FETCH WITH LIVE PROXY</button>
+<button onclick="fetchRC()">🔍 FETCH UNLIMITED</button>
 <div class="result" id="result"><div class="info" id="info"></div><pre id="data"></pre></div>
-<footer>@BRONX_ULTRA • V5</footer>
+<footer>@BRONX_ULTRA • V6</footer>
 </div>
 <script>
 var req=0,ok=0;
@@ -75,7 +75,7 @@ async function fetchRC(){
 var n=document.getElementById('rcInput').value.trim();
 if(!n){alert('Enter RC!');return}
 var r=document.getElementById('result'),d=document.getElementById('data'),i=document.getElementById('info');
-r.classList.add('show');d.style.color='#ffb400';d.textContent='⏳ Fetching LIVE proxy & connecting...';
+r.classList.add('show');d.style.color='#ffb400';d.textContent='⏳ Fetching & retrying if limit...';
 try{
 var resp=await fetch('?rc='+encodeURIComponent(n));
 var json=await resp.json();
@@ -84,7 +84,7 @@ req++;if(json.status==='success')ok++;
 document.getElementById('reqs').textContent=req;
 document.getElementById('oks').textContent=ok;
 if(json._proxy){
-i.innerHTML='🌐 Proxy: '+json._proxy.proxy_used+' | 📱 '+json._proxy.device;
+i.innerHTML='🌐 Proxy: '+json._proxy.proxy_used+' | 📱 '+json._proxy.device+' | Retries: '+json._proxy.retries;
 document.getElementById('prx').textContent=json._proxy.pool_size;
 }
 }catch(e){
@@ -103,12 +103,12 @@ req++;document.getElementById('reqs').textContent=req;
 // ============================================
 function getWorkingProxies() {
     $cacheFile = __DIR__ . '/working_proxies.cache';
-    $cacheTTL = 60; // seconds
+    $cacheTTL = 45; // seconds – refresh often to get fresh IPs
 
-    // Check cache
+    // Check cache – only if we have at least 3 proxies
     if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < $cacheTTL)) {
         $cached = @json_decode(file_get_contents($cacheFile), true);
-        if (is_array($cached) && count($cached) > 0) {
+        if (is_array($cached) && count($cached) >= 3) {
             return $cached;
         }
     }
@@ -116,13 +116,14 @@ function getWorkingProxies() {
     // Fetch fresh proxies
     $allProxies = fetchLiveProxies();
     if (empty($allProxies)) {
+        // Fallback: try direct if no proxies
         return [];
     }
 
-    // Test in parallel (max 10 proxies, 4 sec timeout)
-    $working = testProxiesParallel($allProxies, 10, 4);
+    // Test in parallel (max 15 proxies, 4 sec timeout)
+    $working = testProxiesParallel($allProxies, 15, 4);
 
-    // Cache if we got at least one
+    // Cache if we got at least 1 (but we prefer 3)
     if (count($working) > 0) {
         file_put_contents($cacheFile, json_encode($working));
     }
@@ -133,7 +134,7 @@ function getWorkingProxies() {
 function fetchLiveProxies() {
     $proxies = [];
     
-    // Source 1: ProxyScrape
+    // Source 1: ProxyScrape (HTTP)
     $url = "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=3000&country=all&ssl=all&anonymity=all";
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -143,7 +144,6 @@ function fetchLiveProxies() {
     ]);
     $result = curl_exec($ch);
     curl_close($ch);
-    
     if ($result) {
         $lines = explode("\n", trim($result));
         foreach ($lines as $line) {
@@ -154,8 +154,8 @@ function fetchLiveProxies() {
         }
     }
     
-    // Source 2: ProxyList.download (if less than 10)
-    if (count($proxies) < 10) {
+    // Source 2: ProxyList.download
+    if (count($proxies) < 15) {
         $url2 = "https://www.proxy-list.download/api/v1/get?type=http";
         $ch = curl_init($url2);
         curl_setopt_array($ch, [
@@ -165,7 +165,6 @@ function fetchLiveProxies() {
         ]);
         $result2 = curl_exec($ch);
         curl_close($ch);
-        
         if ($result2) {
             $lines = explode("\n", trim($result2));
             foreach ($lines as $line) {
@@ -176,7 +175,28 @@ function fetchLiveProxies() {
             }
         }
     }
-    
+
+    // Source 3: FreeProxyList (backup)
+    if (count($proxies) < 15) {
+        $url3 = "https://free-proxy-list.net/";
+        $ch = curl_init($url3);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 3,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ]);
+        $result3 = curl_exec($ch);
+        curl_close($ch);
+        if ($result3) {
+            preg_match_all('/\b(?:\d{1,3}\.){3}\d{1,3}:\d+\b/', $result3, $matches);
+            if (!empty($matches[0])) {
+                foreach ($matches[0] as $ip) {
+                    $proxies[] = $ip;
+                }
+            }
+        }
+    }
+
     $proxies = array_unique($proxies);
     return array_values($proxies);
 }
@@ -184,7 +204,7 @@ function fetchLiveProxies() {
 // ============================================
 // 🔥 PARALLEL PROXY TESTING
 // ============================================
-function testProxiesParallel($proxies, $maxToTest = 10, $timeout = 4) {
+function testProxiesParallel($proxies, $maxToTest = 15, $timeout = 4) {
     if (empty($proxies)) return [];
     
     $proxies = array_slice($proxies, 0, $maxToTest);
@@ -213,7 +233,6 @@ function testProxiesParallel($proxies, $maxToTest = 10, $timeout = 4) {
         $handles[$index] = ['ch' => $ch, 'proxy' => $proxy];
     }
     
-    // Execute all concurrently
     $running = null;
     do {
         curl_multi_exec($mh, $running);
@@ -227,7 +246,8 @@ function testProxiesParallel($proxies, $maxToTest = 10, $timeout = 4) {
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         if ($httpCode === 200 && strlen($response) > 100) {
             $data = json_decode($response, true);
-            if ($data && !isset($data['message'])) {
+            // Check if response is valid (not limit message)
+            if ($data && !isset($data['message']) && isset($data['status'])) {
                 $working[] = $item['proxy'];
             }
         }
@@ -239,131 +259,157 @@ function testProxiesParallel($proxies, $maxToTest = 10, $timeout = 4) {
 }
 
 // ============================================
-// 🔥 MAIN LOGIC
+// 🔥 MAIN LOGIC WITH RETRY
 // ============================================
 
 $workingProxies = getWorkingProxies();
-$selectedProxy = null;
+$maxRetries = 3;
+$attempt = 0;
+$response = null;
 $usedProxy = false;
+$selectedProxy = null;
+$lastError = '';
 
-if (count($workingProxies) > 0) {
-    $selectedProxy = $workingProxies[array_rand($workingProxies)];
-    $usedProxy = true;
-}
-
-// ============ DEVICE ============
+// List of devices
 $devices = [
     ["Chrome 120 / Win10", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"],
     ["Safari / iPhone", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1"],
     ["Chrome / Android", "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36"],
     ["Firefox / Win", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"],
     ["Chrome / Mac", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"],
+    ["Edge / Win", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"],
+    ["Safari / Mac", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15"],
 ];
-$device = $devices[array_rand($devices)];
-$deviceName = $device[0];
-$userAgent = $device[1];
 
-$sessionId = bin2hex(random_bytes(4)) . '-' . dechex(time());
-$payload = json_encode(["regNo" => $rc, "sessionid" => $sessionId]);
-$url = "https://api1.91wheels.com/api/v1/third/rc-detail";
-
-$ch = curl_init($url);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => $payload,
-    CURLOPT_TIMEOUT => 10,
-    CURLOPT_CONNECTTIMEOUT => 5,
-    CURLOPT_HTTPHEADER => [
-        "Content-Type: application/json",
-        "Accept: application/json, text/plain, */*",
-        "Accept-Language: en-US,en;q=0.9",
-        "Origin: https://www.91wheels.com",
-        "Referer: https://www.91wheels.com/",
-        "User-Agent: $userAgent",
-        "Cache-Control: no-cache",
-    ],
-    CURLOPT_COOKIE => "session_id=$sessionId",
-    CURLOPT_SSL_VERIFYPEER => false,
-]);
-
-if ($selectedProxy) {
-    curl_setopt($ch, CURLOPT_PROXY, $selectedProxy);
-    curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
-}
-
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$error = curl_error($ch);
-curl_close($ch);
-
-// Fallback direct if proxy failed
-if (($error || $httpCode !== 200) && $selectedProxy) {
+while ($attempt < $maxRetries) {
+    $attempt++;
+    
+    // Pick a random proxy from pool
+    if (count($workingProxies) > 0) {
+        $selectedProxy = $workingProxies[array_rand($workingProxies)];
+        $usedProxy = true;
+    } else {
+        $selectedProxy = null;
+        $usedProxy = false;
+    }
+    
+    // Random device
+    $device = $devices[array_rand($devices)];
+    $deviceName = $device[0];
+    $userAgent = $device[1];
+    
+    // Fresh session ID
+    $sessionId = bin2hex(random_bytes(4)) . '-' . dechex(time() + $attempt);
+    $payload = json_encode(["regNo" => $rc, "sessionid" => $sessionId]);
+    $url = "https://api1.91wheels.com/api/v1/third/rc-detail";
+    
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $payload,
         CURLOPT_TIMEOUT => 10,
+        CURLOPT_CONNECTTIMEOUT => 5,
         CURLOPT_HTTPHEADER => [
             "Content-Type: application/json",
             "Accept: application/json, text/plain, */*",
+            "Accept-Language: en-US,en;q=0.9",
             "Origin: https://www.91wheels.com",
             "Referer: https://www.91wheels.com/",
             "User-Agent: $userAgent",
+            "Cache-Control: no-cache",
         ],
+        CURLOPT_COOKIE => "session_id=$sessionId",
         CURLOPT_SSL_VERIFYPEER => false,
     ]);
+    
+    if ($selectedProxy) {
+        curl_setopt($ch, CURLOPT_PROXY, $selectedProxy);
+        curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+    }
+    
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
     curl_close($ch);
-    $usedProxy = false;
-    $selectedProxy = null;
-}
-
-// ============ RESPONSE ============
-if ($error) {
-    echo json_encode([
-        "status" => "error",
-        "message" => $error,
-        "_proxy" => [
-            "proxy_used" => $usedProxy ? ($selectedProxy ?? "proxy") : "direct",
-            "device" => $deviceName,
-            "pool_size" => count($workingProxies),
-            "success" => false,
-            "credit" => "@BRONX_ULTRA"
-        ]
-    ]);
+    
+    // If proxy failed, try direct (fallback)
+    if (($error || $httpCode !== 200) && $selectedProxy) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json",
+                "Accept: application/json, text/plain, */*",
+                "Origin: https://www.91wheels.com",
+                "Referer: https://www.91wheels.com/",
+                "User-Agent: $userAgent",
+            ],
+            CURLOPT_SSL_VERIFYPEER => false,
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+        $usedProxy = false;
+        $selectedProxy = null;
+    }
+    
+    if ($error) {
+        $lastError = $error;
+        continue; // retry with next proxy
+    }
+    
+    $data = json_decode($response, true);
+    if (!$data) {
+        $lastError = "Invalid JSON response (HTTP $httpCode)";
+        continue;
+    }
+    
+    // Check if we hit the limit
+    if (isset($data['message']) && stripos($data['message'], 'limit') !== false) {
+        // Limit hit – retry with another proxy
+        $lastError = "Limit hit, retrying...";
+        // Optionally, remove this proxy from pool temporarily
+        if ($selectedProxy && ($key = array_search($selectedProxy, $workingProxies)) !== false) {
+            // Remove it so we don't use it again immediately
+            unset($workingProxies[$key]);
+            $workingProxies = array_values($workingProxies);
+        }
+        continue; // retry
+    }
+    
+    // Successful response (no limit)
+    $data["_proxy"] = [
+        "proxy_used" => $usedProxy ? $selectedProxy : "direct",
+        "device" => $deviceName,
+        "pool_size" => count($workingProxies),
+        "cached" => file_exists(__DIR__ . '/working_proxies.cache') ? 'yes' : 'no',
+        "session_id" => substr($sessionId, 0, 8) . "***",
+        "retries" => $attempt,
+        "success" => true,
+        "credit" => "@BRONX_ULTRA"
+    ];
+    $data["status"] = "success";
+    
+    echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-$data = json_decode($response, true);
-if (!$data) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "Invalid response (HTTP $httpCode)",
-        "_proxy" => [
-            "proxy_used" => $usedProxy ? ($selectedProxy ?? "proxy") : "direct",
-            "device" => $deviceName,
-            "pool_size" => count($workingProxies),
-            "success" => false,
-            "credit" => "@BRONX_ULTRA"
-        ]
-    ]);
-    exit;
-}
-
-// Success
-$data["_proxy"] = [
-    "proxy_used" => $usedProxy ? $selectedProxy : "direct (no working proxy)",
-    "device" => $deviceName,
-    "pool_size" => count($workingProxies),
-    "cached" => file_exists(__DIR__ . '/working_proxies.cache') ? 'yes' : 'no',
-    "session_id" => substr($sessionId, 0, 8) . "***",
-    "success" => true,
-    "credit" => "@BRONX_ULTRA"
-];
-
-echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+// If all retries failed
+echo json_encode([
+    "status" => "error",
+    "message" => "All retries failed. Last error: $lastError",
+    "_proxy" => [
+        "proxy_used" => "none",
+        "device" => "none",
+        "pool_size" => count($workingProxies),
+        "retries" => $maxRetries,
+        "success" => false,
+        "credit" => "@BRONX_ULTRA"
+    ]
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 ?>
