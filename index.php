@@ -1,10 +1,12 @@
 <?php
 // ============================================
-// 🚗 BRONX 91WHEELS PROXY V5 (ULTRA FAST)
-// Parallel Testing + Caching
+// 🚗 BRONX 91WHEELS PROXY V2
+// Auto-Fetch Working Proxies • Real IP Rotation
 // ============================================
 
+// Increase time limit
 set_time_limit(30);
+
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
@@ -23,7 +25,7 @@ if ($rc === '') {
     ?>
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>🚗 BRONX RC PROXY V5</title>
+<title>🚗 BRONX RC PROXY V2</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000a14;color:#d0d8f0;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
@@ -51,11 +53,11 @@ footer{color:#333;font-size:9px;margin-top:12px}
 </style></head>
 <body>
 <div class="card">
-<h1>🚗 BRONX RC PROXY V5</h1>
-<p class="subtitle">⚡ ULTRA FAST • PARALLEL TESTING • CACHED</p>
+<h1>🚗 BRONX RC PROXY V2</h1>
+<p class="subtitle">LIVE PROXIES • AUTO FETCH • UNLIMITED</p>
 <div class="badges">
-<span class="badge">🌐 Live Proxies</span><span class="badge">⚡ Parallel</span>
-<span class="badge">✅ Cached</span><span class="badge">∞ Unlimited</span>
+<span class="badge">🌐 Live Proxies</span><span class="badge">🔄 Auto Fetch</span>
+<span class="badge">✅ Tested</span><span class="badge">∞ Unlimited</span>
 </div>
 <div class="stats">
 <div class="stat"><div class="num" id="reqs">0</div><div class="lbl">Requests</div></div>
@@ -67,7 +69,7 @@ footer{color:#333;font-size:9px;margin-top:12px}
 <input type="text" id="rcInput" placeholder="Enter RC Number..." autocomplete="off">
 <button onclick="fetchRC()">🔍 FETCH WITH LIVE PROXY</button>
 <div class="result" id="result"><div class="info" id="info"></div><pre id="data"></pre></div>
-<footer>@BRONX_ULTRA • V5</footer>
+<footer>@BRONX_ULTRA</footer>
 </div>
 <script>
 var req=0,ok=0;
@@ -99,46 +101,17 @@ req++;document.getElementById('reqs').textContent=req;
 }
 
 // ============================================
-// 🔥 FETCH LIVE WORKING PROXIES (Cached)
+// 🔥 FETCH LIVE WORKING PROXIES
 // ============================================
-function getWorkingProxies() {
-    $cacheFile = __DIR__ . '/working_proxies.cache';
-    $cacheTTL = 60; // seconds
-
-    // Check cache
-    if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < $cacheTTL)) {
-        $cached = @json_decode(file_get_contents($cacheFile), true);
-        if (is_array($cached) && count($cached) > 0) {
-            return $cached;
-        }
-    }
-
-    // Fetch fresh proxies
-    $allProxies = fetchLiveProxies();
-    if (empty($allProxies)) {
-        return [];
-    }
-
-    // Test in parallel (max 10 proxies, 4 sec timeout)
-    $working = testProxiesParallel($allProxies, 10, 4);
-
-    // Cache if we got at least one
-    if (count($working) > 0) {
-        file_put_contents($cacheFile, json_encode($working));
-    }
-
-    return $working;
-}
-
 function fetchLiveProxies() {
     $proxies = [];
     
-    // Source 1: ProxyScrape
-    $url = "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=6000&country=all&ssl=all&anonymity=all";
+    // Source 1: ProxyScrape (Fast, reliable)
+    $url = "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=30000&country=all&ssl=all&anonymity=all";
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 3,
+        CURLOPT_TIMEOUT => 5,
         CURLOPT_SSL_VERIFYPEER => false,
     ]);
     $result = curl_exec($ch);
@@ -154,13 +127,13 @@ function fetchLiveProxies() {
         }
     }
     
-    // Source 2: ProxyList.download (if less than 10)
+    // Source 2: ProxyList.download (Backup)
     if (count($proxies) < 10) {
         $url2 = "https://www.proxy-list.download/api/v1/get?type=http";
         $ch = curl_init($url2);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 3,
+            CURLOPT_TIMEOUT => 5,
             CURLOPT_SSL_VERIFYPEER => false,
         ]);
         $result2 = curl_exec($ch);
@@ -177,72 +150,80 @@ function fetchLiveProxies() {
         }
     }
     
+    // Remove duplicates
     $proxies = array_unique($proxies);
+    
     return array_values($proxies);
 }
 
 // ============================================
-// 🔥 PARALLEL PROXY TESTING
+// 🔥 TEST IF PROXY WORKS WITH 91Wheels
 // ============================================
-function testProxiesParallel($proxies, $maxToTest = 10, $timeout = 4) {
-    if (empty($proxies)) return [];
+function testProxy($proxy) {
+    $ch = curl_init("https://api1.91wheels.com/api/v1/third/rc-detail");
     
-    $proxies = array_slice($proxies, 0, $maxToTest);
-    $mh = curl_multi_init();
-    $handles = [];
+    $payload = json_encode([
+        "regNo" => "MH02FZ0555",
+        "sessionid" => "test-" . uniqid()
+    ]);
     
-    foreach ($proxies as $index => $proxy) {
-        $ch = curl_init();
-        $payload = json_encode(["regNo" => "MH02FZ0555", "sessionid" => "test-" . uniqid()]);
-        curl_setopt_array($ch, [
-            CURLOPT_URL => "https://api1.91wheels.com/api/v1/third/rc-detail",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $payload,
-            CURLOPT_TIMEOUT => $timeout,
-            CURLOPT_CONNECTTIMEOUT => 2,
-            CURLOPT_PROXY => $proxy,
-            CURLOPT_PROXYTYPE => CURLPROXY_HTTP,
-            CURLOPT_HTTPHEADER => [
-                "Content-Type: application/json",
-                "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            ],
-            CURLOPT_SSL_VERIFYPEER => false,
-        ]);
-        curl_multi_add_handle($mh, $ch);
-        $handles[$index] = ['ch' => $ch, 'proxy' => $proxy];
-    }
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $payload,
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_PROXY => $proxy,
+        CURLOPT_PROXYTYPE => CURLPROXY_HTTP,
+        CURLOPT_HTTPHEADER => [
+            "Content-Type: application/json",
+            "Accept: application/json",
+            "Origin: https://www.91wheels.com",
+            "User-Agent: Mozilla/5.0",
+        ],
+        CURLOPT_SSL_VERIFYPEER => false,
+    ]);
     
-    // Execute all concurrently
-    $running = null;
-    do {
-        curl_multi_exec($mh, $running);
-        curl_multi_select($mh);
-    } while ($running > 0);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
     
-    $working = [];
-    foreach ($handles as $index => $item) {
-        $ch = $item['ch'];
-        $response = curl_multi_getcontent($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($httpCode === 200 && strlen($response) > 100) {
-            $data = json_decode($response, true);
-            if ($data && !isset($data['message'])) {
-                $working[] = $item['proxy'];
-            }
+    // Valid if response has data (not limit message)
+    if ($httpCode === 200 && $response && strlen($response) > 100) {
+        $data = json_decode($response, true);
+        if ($data && isset($data['status']) && !isset($data['message'])) {
+            return true;
         }
-        curl_multi_remove_handle($mh, $ch);
-        curl_close($ch);
+        if ($data && !isset($data['message'])) {
+            return true;
+        }
     }
-    curl_multi_close($mh);
-    return $working;
+    
+    return false;
 }
 
 // ============================================
 // 🔥 MAIN LOGIC
 // ============================================
 
-$workingProxies = getWorkingProxies();
+// Fetch proxies
+$allProxies = fetchLiveProxies();
+$workingProxies = [];
+$testedCount = 0;
+$maxTest = min(15, count($allProxies)); // Test max 15 proxies
+
+// Test proxies quickly
+foreach ($allProxies as $proxy) {
+    if ($testedCount >= $maxTest) break;
+    
+    $testedCount++;
+    if (testProxy($proxy)) {
+        $workingProxies[] = $proxy;
+        if (count($workingProxies) >= 3) break; // 3 working proxies enough
+    }
+}
+
+// Select proxy
 $selectedProxy = null;
 $usedProxy = false;
 
@@ -259,12 +240,20 @@ $devices = [
     ["Firefox / Win", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"],
     ["Chrome / Mac", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"],
 ];
+
 $device = $devices[array_rand($devices)];
 $deviceName = $device[0];
 $userAgent = $device[1];
 
+// ============ SESSION ============
 $sessionId = bin2hex(random_bytes(4)) . '-' . dechex(time());
-$payload = json_encode(["regNo" => $rc, "sessionid" => $sessionId]);
+
+// ============ MAKE REQUEST ============
+$payload = json_encode([
+    "regNo" => $rc,
+    "sessionid" => $sessionId
+]);
+
 $url = "https://api1.91wheels.com/api/v1/third/rc-detail";
 
 $ch = curl_init($url);
@@ -272,8 +261,8 @@ curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => true,
     CURLOPT_POSTFIELDS => $payload,
-    CURLOPT_TIMEOUT => 10,
-    CURLOPT_CONNECTTIMEOUT => 5,
+    CURLOPT_TIMEOUT => 15,
+    CURLOPT_CONNECTTIMEOUT => 8,
     CURLOPT_HTTPHEADER => [
         "Content-Type: application/json",
         "Accept: application/json, text/plain, */*",
@@ -287,6 +276,7 @@ curl_setopt_array($ch, [
     CURLOPT_SSL_VERIFYPEER => false,
 ]);
 
+// Add proxy if available
 if ($selectedProxy) {
     curl_setopt($ch, CURLOPT_PROXY, $selectedProxy);
     curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
@@ -297,14 +287,15 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $error = curl_error($ch);
 curl_close($ch);
 
-// Fallback direct if proxy failed
+// ============ IF PROXY FAILED, RETRY DIRECT ============
 if (($error || $httpCode !== 200) && $selectedProxy) {
+    // Retry without proxy
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $payload,
-        CURLOPT_TIMEOUT => 10,
+        CURLOPT_TIMEOUT => 15,
         CURLOPT_HTTPHEADER => [
             "Content-Type: application/json",
             "Accept: application/json, text/plain, */*",
@@ -314,10 +305,12 @@ if (($error || $httpCode !== 200) && $selectedProxy) {
         ],
         CURLOPT_SSL_VERIFYPEER => false,
     ]);
+    
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
     curl_close($ch);
+    
     $usedProxy = false;
     $selectedProxy = null;
 }
@@ -331,6 +324,7 @@ if ($error) {
             "proxy_used" => $usedProxy ? ($selectedProxy ?? "proxy") : "direct",
             "device" => $deviceName,
             "pool_size" => count($workingProxies),
+            "total_fetched" => count($allProxies),
             "success" => false,
             "credit" => "@BRONX_ULTRA"
         ]
@@ -339,6 +333,7 @@ if ($error) {
 }
 
 $data = json_decode($response, true);
+
 if (!$data) {
     echo json_encode([
         "status" => "error",
@@ -347,6 +342,7 @@ if (!$data) {
             "proxy_used" => $usedProxy ? ($selectedProxy ?? "proxy") : "direct",
             "device" => $deviceName,
             "pool_size" => count($workingProxies),
+            "total_fetched" => count($allProxies),
             "success" => false,
             "credit" => "@BRONX_ULTRA"
         ]
@@ -359,9 +355,11 @@ $data["_proxy"] = [
     "proxy_used" => $usedProxy ? $selectedProxy : "direct (no working proxy)",
     "device" => $deviceName,
     "pool_size" => count($workingProxies),
-    "cached" => file_exists(__DIR__ . '/working_proxies.cache') ? 'yes' : 'no',
+    "total_fetched" => count($allProxies),
+    "tested" => $testedCount,
     "session_id" => substr($sessionId, 0, 8) . "***",
     "success" => true,
+    "note" => $usedProxy ? "Request sent via LIVE PROXY!" : "Direct connection",
     "credit" => "@BRONX_ULTRA"
 ];
 
